@@ -2,9 +2,12 @@ import express from "express";
 import { Server } from "socket.io";
 import http from "http";
 import { ILogObj, Logger } from "tslog";
+import cookieParser from "cookie-parser";
 
 
 const app = express();
+app.use(express.json());
+app.use(cookieParser());
 const PORT = 3000;
 
 const server = http.createServer(app);
@@ -32,6 +35,12 @@ io.on("connection", (socket) => {
 app.get("/", (req, res) => {
   res.send("Hello from TypeScript + Express!");
 });
+
+// import routers 
+
+import userRouter from "./routes/user.routes";
+
+app.use("/api/v1/user", userRouter);
 
 // app.listen(PORT, () => {
 //   console.log(`Server is running on http://localhost:${PORT}`);

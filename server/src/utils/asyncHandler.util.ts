@@ -9,11 +9,13 @@
 //   }
 // };
 
-import { NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 
-const asyncHandler = (requestHandler: Function ) => {
+type AsyncHandlerFn = (req: Request, res: Response, next: NextFunction) => Promise<any>;
+
+const asyncHandler = (requestHandler: AsyncHandlerFn) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err));
+    Promise.resolve(requestHandler(req, res, next)).catch(next);
   };
 };
 

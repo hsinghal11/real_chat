@@ -1,15 +1,15 @@
 import z from 'zod';
 
 const userSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    email: z.string().email("Invalid email address").min(1, "Email is required"),
-    phone: z.string().min(1, "Phone number is required"),
-    password: z.string().min(8, "Password must be at least 8 characters long").max(20, "Password must be at most 20 characters long").regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/, "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"),
+    name: z.string().min(1, "Name is required").trim(),
+    email: z.string().email("Invalid email address").min(1, "Email is required").trim(),
+    phone: z.string().min(1, "Phone number is required").trim(),
+    password: z.string().min(8, "Password must be at least 8 characters long").max(20, "Password must be at most 20 characters long").regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/, "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character").trim(),
 });
 
 const chatSchema = z.object({
     type: z.enum(["PRIVATE", "GROUP"]),
-    title: z.string().optional(),
+    title: z.string().trim().optional(),
 }).refine((data) => {
     if (data.type === "GROUP" && !data.title) {
         return false;
@@ -27,7 +27,7 @@ const participantSchema = z.object({
 });
 
 const messageSchema = z.object({
-    content: z.string().min(1, "Message content is required"),
+    content: z.string().min(1, "Message content is required").trim(),
     senderId: z.string().uuid("Invalid sender ID"),
     chatId: z.string().uuid("Invalid chat ID"),
 }).refine((data) => {   
