@@ -1,9 +1,10 @@
 import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/asyncHandler.util";
-import { userSchema } from "../validation/validate";
+import { userSchema, loginSchema } from "../validation/validate";
 import { NextFunction, Request, Response } from "express";
 import { prismaClient } from "../db";
 import bcrypt from "bcrypt";
+import { PassThrough } from "stream";
 
 const generateRefreshToken = (userId: string) => {
   return jwt.sign(
@@ -16,9 +17,6 @@ const generateRefreshToken = (userId: string) => {
     }
   );
 };
-
-
-
 
 const registerUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   console.log("Register User");
@@ -50,71 +48,82 @@ const registerUser = asyncHandler(async (req: Request, res: Response, next: Next
 });
 
 const loginUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const parsedBody = userSchema.safeParse(req.body);
-  if (!parsedBody.success) {
-    res.status(400).json({
-      success: false,
-      message: parsedBody.error.errors[0].message,
-    });
-    return;
-  }
-
-  const user = await prismaClient.user.findFirst({
-    where:{
-        OR: [
-            {
-                email: parsedBody.data.email,
-            },
-            {
-                phone: parsedBody.data.phone,
-            }
-        ]
+  try {
+    const parsedBody = loginSchema.safeParse(req.body);
+    if (!parsedBody.success) {
+      res.status(400).json({
+        success: false,
+        message: parsedBody.error.errors[0].message,
+      });
+      return;
     }
-  });
-
-  if (!user) {
-    res.status(401).json({
-      success: false,
-      message: "Invalid Email or Phone",
+  
+    console.log(parsedBody);
+  
+    const user = await prismaClient.user.findFirst({
+      where:{
+          OR: [
+              {
+                  email: parsedBody.data.email
+              },
+              {
+                  phone: parsedBody.data.phone
+              }
+          ]
+      }
     });
-    return;
-  }
-
-  const isPasswordValid = await bcrypt.compare(
-    parsedBody.data.password,
-    user.password
-  );
-
-  if (!isPasswordValid) {
-    res.status(401).json({
-      success: false,
-      message: "password is not correct",
-    });
-    return;
-  }
-
-  const refreshToken = generateRefreshToken(user.id);
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  const userWithRefreshToken = await prismaClient.user.update({
-    where:{
-        id: user.id,
-    },
-    data:{
-        refreshToken: refreshToken
+  
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: "Invalid Email or Phone",
+      });
+      return;
     }
-  }) 
-
-  res.status(200).json({
-    success: true,
-    message: "Login successful",
-    data : userWithRefreshToken,
-  });
+  
+    const isPasswordValid = await bcrypt.compare(
+      parsedBody.data.password,
+      user.password
+    );
+  
+    if (!isPasswordValid) {
+      res.status(401).json({
+        success: false,
+        message: "password is not correct",
+      });
+      return;
+    }
+  
+    const refreshToken = generateRefreshToken(user.id);
+  
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+  
+    const userWithRefreshToken = await prismaClient.user.update({
+      where:{
+          id: user.id,
+      },
+      data:{
+          refreshToken: refreshToken
+      }
+    }) 
+  
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data : userWithRefreshToken,
+    });
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+    
+  }
 });
 
 

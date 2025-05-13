@@ -3,12 +3,13 @@ import { Server } from "socket.io";
 import http from "http";
 import { ILogObj, Logger } from "tslog";
 import cookieParser from "cookie-parser";
+import { appendFileSync } from "fs";
 
 
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-const PORT = 3000;
+const PORT = 8000;
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -19,14 +20,15 @@ const io = new Server(server, {
 });
 
 const log: Logger<ILogObj> = new Logger();
+log.attachTransport((logObj) => {
+  appendFileSync("logs.txt", JSON.stringify(logObj) + "\n");
+});
 
-io.listen(4000);
 
 io.on("connection", (socket) => {
-    log.info("User connected", socket.id);
     console.log("USer connected", socket.id);  
     socket.on("hello", (data) => {
-        log.info("Hello event received", data);
+        // log.info("Hello event received", data);
         console.log("Hello event received", data);
         socket.emit("hello", "Hello from server!");
     });
@@ -47,5 +49,6 @@ app.use("/api/v1/user", userRouter);
 // });
 
 server.listen(PORT, () => {
+  log.info(`Server is running on http://localhost:${PORT} `);
   console.log(`Server is running on http://localhost:${PORT}`);
 });
