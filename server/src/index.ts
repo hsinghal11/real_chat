@@ -1,9 +1,8 @@
 import express from "express";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import http from "http";
-import { ILogObj, Logger } from "tslog";
 import cookieParser from "cookie-parser";
-import { appendFileSync } from "fs";
+import cors from "cors";
 
 
 const app = express();
@@ -19,18 +18,17 @@ const io = new Server(server, {
     }
 });
 
-const log: Logger<ILogObj> = new Logger();
-log.attachTransport((logObj) => {
-  appendFileSync("logs.txt", JSON.stringify(logObj) + "\n");
-});
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+})) 
 
-
-io.on("connection", (socket) => {
+io.on("connection", (socket: Socket) => {
     console.log("USer connected", socket.id);  
     socket.on("hello", (data) => {
         // log.info("Hello event received", data);
         console.log("Hello event received", data);
-        socket.emit("hello", "Hello from server!");
+        io.emit("hello", `${data}`);
     });
 });
 
@@ -49,6 +47,5 @@ app.use("/api/v1/user", userRouter);
 // });
 
 server.listen(PORT, () => {
-  log.info(`Server is running on http://localhost:${PORT} `);
   console.log(`Server is running on http://localhost:${PORT}`);
 });
