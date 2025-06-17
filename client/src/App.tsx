@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { io } from "socket.io-client"
+import { Button } from "./components/ui/button";
 
 
 function App() {
@@ -45,7 +46,7 @@ function App() {
         value={message}
         onChange={(e) => setMessage(e.target.value)}
       />
-      <button onClick={sendInput}>send message</button>
+      <Button onClick={sendInput}>send message</Button>
       <ul>
         {messages.map((msg, index) => (
           <li key={index}>{msg}</li>
