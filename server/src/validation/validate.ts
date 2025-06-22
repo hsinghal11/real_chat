@@ -3,33 +3,29 @@ import z, { date } from 'zod';
 const userSchema = z.object({
     name: z.string().min(1, "Name is required").trim(),
     email: z.string().email("Invalid email address").min(1, "Email is required").trim(),
-    phone: z.string().min(1, "Phone number is required").trim(),
     password: z.string().min(8, "Password must be at least 8 characters long").max(20, "Password must be at most 20 characters long").regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_])[A-Za-z\d@$!%*?&_]{8,20}$/, "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character").trim(),
+    pic: z.string().optional(),
 });
 
 const chatSchema = z.object({
-    type: z.enum(["PRIVATE", "GROUP"]),
-    title: z.string().trim().optional(),
+    isGroupChat: z.boolean(),
+    chatName: z.string().trim().optional(),
+    latestMessage: z.string().trim().optional(),
+    groupPic: z.string().optional(),
+    users: z.array(z.string()).min(1, "At least one user is required")
 }).refine((data) => {
-    if (data.type === "GROUP" && !data.title) {
+    if (data.isGroupChat && !data.chatName) {
         return false;
     }
     return true;
 }, {
-    message: "Title is required for group chats",
-});
-
-
-const participantSchema = z.object({
-    userId: z.string().uuid("Invalid user ID"),
-    chatId: z.string().uuid("Invalid chat ID"),
-    role: z.enum(["MEMBER", "ADMIN", "OWNER"]).optional(),
+    message: "Chat name is required for group chats",
 });
 
 const messageSchema = z.object({
     content: z.string().min(1, "Message content is required").trim(),
-    senderId: z.string().uuid("Invalid sender ID"),
-    chatId: z.string().uuid("Invalid chat ID"),
+    senderId: z.string(),
+    chatId: z.string(),
 }).refine((data) => {   
     if (data.content.length > 500) {
         return false;
@@ -44,17 +40,15 @@ const loginSchema = z.object({
     .string()
     .trim()
     .nonempty("email is empty")
-    .email("email required")
-    .optional(),
-  phone: z.string().trim().nonempty("Username is empty").optional(),
-  password: z.string(),
+    .email("email required"),
+  password: z.string().min(1, "Password is required").trim(),
 }).refine((data)=>{
-    if (!data.email && !data.phone) {
+    if (!data.email) {
         return false;
     }
     return true;
 }, {
-    message: "Either email or phone is required",
+    message: "Email is required",
 });
 
-export { userSchema, chatSchema, participantSchema, messageSchema, loginSchema };
+export { userSchema, chatSchema, messageSchema, loginSchema };

@@ -1,130 +1,98 @@
-import jwt from "jsonwebtoken";
+import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.util";
-import { userSchema, loginSchema } from "../validation/validate";
-import { NextFunction, Request, Response } from "express";
-import { prismaClient } from "../db";
+import { loginSchema, userSchema } from "../validation/validate";
 import bcrypt from "bcrypt";
-import { PassThrough } from "stream";
+import { prismaClient } from "../db";
 
-const generateRefreshToken = (userId: string) => {
-  return jwt.sign(
-    {
-      userId,
-    },
-    process.env.REFERESH_TOKEN_SECRET as string,
-    {
-      expiresIn: "1m",
+/** User Registration 
+ * @route POST /api/v1/user/register
+ * @desc Register a new user
+ * @access Public
+*/
+export const registerUser = asyncHandler(async (req: Request, res:Response) => {
+    const payLoad = req.body;
+    const result = userSchema.safeParse(payLoad);
+
+    if(!result.success){
+        return res.status(400).json({
+            messsage: "Input is wrong for registration",
+            error: result.error.errors
+        })
     }
-  );
-};
 
-const registerUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  console.log("Register User");
-  const parsedBody = userSchema.safeParse(req.body);
-  if (!parsedBody.success) {
-    res.status(400).json({
-      success: false,
-      message: parsedBody.error.errors[0].message,
-    });
-    return;
-  }
+    const { email, name, password, pic } = result.data;
 
-  const hashedPassword = await bcrypt.hash(parsedBody.data.password, 10);
+    const isUserExists = await prismaClient.user.findUnique({
+        where: {
+            email: email
+        }
+    })
 
-  const data = await prismaClient.user.create({
-    data: {
-      name: parsedBody.data.name,
-      email: parsedBody.data.email,
-      phone: parsedBody.data.phone,
-      password: hashedPassword,
-    },
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "User created successfully",
-    data : data,
-  })
-});
-
-const loginUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const parsedBody = loginSchema.safeParse(req.body);
-    if (!parsedBody.success) {
-      res.status(400).json({
-        success: false,
-        message: parsedBody.error.errors[0].message,
-      });
-      return;
+    if (isUserExists){
+        return res.status(400).json({
+            message: "User already exists with this email"
+        });
     }
-  
-    console.log(parsedBody);
-  
-    const user = await prismaClient.user.findFirst({
-      where:{
-          OR: [
-              {
-                  email: parsedBody.data.email
-              },
-              {
-                  phone: parsedBody.data.phone
-              }
-          ]
-      }
+
+    const hashedPassword = await bcrypt.hash(password, 8);
+
+    const newUser = await prismaClient.user.create({
+        data: {
+            name: name,
+            email:email,
+            password: hashedPassword,
+            pic: pic
+        }
+    })
+
+    return res.status(201).json({
+        message: "User registered successfully",
+        user: newUser
+    })
+})
+
+
+/** User Login
+ * @route POST /api/v1/user/login
+ * @desc Login a user
+ * @access Public
+*/
+export const loginUser = asyncHandler(async (req: Request, res: Response) => {
+    const payLoad = req.body;
+    const result = loginSchema.safeParse(payLoad);
+
+    if (!result.success) {
+        return res.status(400).json({
+            message: "Input is wrong for login",
+            error: result.error.errors
+        });
+    }
+
+    const { email, password } = result.data;
+
+    const user = await prismaClient.user.findUnique({
+        where: {
+            email: email
+        }
     });
-  
+
     if (!user) {
-      res.status(401).json({
-        success: false,
-        message: "Invalid Email or Phone",
-      });
-      return;
+        return res.status(404).json({
+            message: "User not found"
+        });
     }
-  
-    const isPasswordValid = await bcrypt.compare(
-      parsedBody.data.password,
-      user.password
-    );
-  
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
-      res.status(401).json({
-        success: false,
-        message: "password is not correct",
-      });
-      return;
+        return res.status(401).json({
+            message: "Invalid password"
+        });
     }
-  
-    const refreshToken = generateRefreshToken(user.id);
-  
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
-  
-    const userWithRefreshToken = await prismaClient.user.update({
-      where:{
-          id: user.id,
-      },
-      data:{
-          refreshToken: refreshToken
-      }
-    }) 
-  
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data : userWithRefreshToken,
-    });
-  } catch (error) {
-    console.error("Error during login:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-    
-  }
-});
 
+    return res.status(200).json({
+        message: "Login successful",
+        user: user
+    });
+})
 
-export { registerUser, loginUser };

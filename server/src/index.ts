@@ -39,12 +39,15 @@ app.get("/", (req, res) => {
 // import routers 
 
 import userRouter from "./routes/user.routes";
+import { errorHandler } from "./middleware/errorHandler";
 
 app.use("/api/v1/user", userRouter);
 
 // app.listen(PORT, () => {
 //   console.log(`Server is running on http://localhost:${PORT}`);
 // });
+
+app.use(errorHandler);
 
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
