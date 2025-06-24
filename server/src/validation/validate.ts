@@ -7,9 +7,9 @@ const userSchema = z.object({
     pic: z.string().optional(),
 });
 
-const chatSchema = z.object({
-    isGroupChat: z.boolean(),
-    chatName: z.string().trim().optional(),
+const groupChatSchema = z.object({
+    isGroupChat: z.literal(true),
+    chatName: z.string().trim(),
     latestMessage: z.string().trim().optional(),
     groupPic: z.string().optional(),
     users: z.array(z.string()).min(1, "At least one user is required")
@@ -51,4 +51,4 @@ const loginSchema = z.object({
     message: "Email is required",
 });
 
-export { userSchema, chatSchema, messageSchema, loginSchema };
+export { userSchema, groupChatSchema, messageSchema, loginSchema };
