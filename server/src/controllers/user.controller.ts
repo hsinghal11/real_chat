@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.util";
 import { loginSchema, userSchema } from "../validation/validate";
 import bcrypt from "bcrypt";
 import { prismaClient } from "../db";
+import jwt from "jsonwebtoken";
 
 /** User Registration 
  * @route POST /api/v1/user/register
@@ -89,10 +90,70 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
             message: "Invalid password"
         });
     }
+    // Generate JWT token
+    const token = jwt.sign(
+        { userId: user.id },
+        process.env.REFERESH_TOKEN_SECRET as string,
+        { expiresIn: "7d" }
+    );
+
+    console.log(`error here at line 107`);
+
+
+    // Set token as HTTP-only cookie
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
     return res.status(200).json({
         message: "Login successful",
-        user: user
+        user: user,
+        token: token
     });
 })
+
+/**
+ * @route GET /api/v1/user/search?email=xxx
+ * @desc Search for a user by email
+ * @access Private (requires authentication)
+ */
+export const searchUserByEmail = asyncHandler(async (req: Request, res: Response) => {
+    const email = req.query.email as string;
+    if (!email) {
+        return res.status(400).json({ message: "Email query parameter is required" });
+    }
+    const user = await prismaClient.user.findUnique({
+        where: { email },
+        select: { id: true, name: true, email: true, pic: true },
+    });
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json({ user });
+});
+
+/**
+ * @route GET /api/v1/user/fuzzy-search?email=xxx
+ * @desc Fuzzy search for users by email using trigram similarity
+ * @access Private (requires authentication)
+ */
+export const fuzzySearchUserByEmail = asyncHandler(async (req: Request, res: Response) => {
+    const email = req.query.email as string;
+    if (!email) {
+        return res.status(400).json({ message: "Email query parameter is required" });
+    }
+    const threshold = 0.3;
+    await prismaClient.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = ${threshold};`);
+    const users = await prismaClient.$queryRawUnsafe(
+        `SELECT id, name, email, pic FROM "User" WHERE email % $1 ORDER BY similarity(email, $1) DESC LIMIT 5;`,
+        email
+    ) as Array<{ id: number, name: string, email: string, pic: string }>;
+    if (!users || users.length === 0) {
+        return res.status(404).json({ message: "No similar users found" });
+    }
+    return res.status(200).json({ users });
+});
 
