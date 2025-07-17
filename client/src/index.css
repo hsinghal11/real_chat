@@ -150,6 +150,33 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
+.user-profile-2:hover,
+.user-profile-2:focus {
+  background-color: rgba(46, 142, 255, 0.7);
+  box-shadow: 0 0 10px rgba(46, 142, 255, 0.5);
+  outline: none;
+}
+
+.user-profile-inner-2 {
+  width: 102px;
+  height:42px;
+  border-radius: 13px;
+  background-color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.user-profile-inner-2 svg {
+  width: 18px;
+  height: 18px;
+  fill: #fff;
+}
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

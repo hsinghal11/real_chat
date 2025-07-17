@@ -1,63 +1,72 @@
-import { useEffect, useMemo, useState } from "react";
-import { io } from "socket.io-client"
-import { Button } from "./components/ui/button";
+import { useEffect, useState } from "react";
+import { Routes, BrowserRouter, Route } from "react-router";
+import { io, Socket } from "socket.io-client";
 import LoginPage from "./page/Login";
 import SignUpPage from "./page/signup";
+// import { Button } from "./components/ui/button";
+// import { Input } from "./components/ui/input";
 
+const socket: Socket = io("http://localhost:8000", {
+  withCredentials: true,
+});
 
 function App() {
+  // const [message, setMessage] = useState("");
+  // const [chatId, setChatId] = useState("1"); // Dummy chatId for testing
 
+  // useEffect(() => {
+  //   console.log("Connecting to socket...");
 
-  const socket = useMemo(
-    () =>
-      io("http://localhost:8000", {
-        transports: ["websocket"],
-        withCredentials: true,
-      }),
-    []
-  );
+  //   socket.on("connect", () => {
+  //     console.log("Connected:", socket.id);
+  //   });
 
-  const [messages, setMessages] = useState<string[]>([]);
-  const [message, setMessage] = useState<string>("");
-  
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log(`connected to server with id : ${socket.id}`);
-    });
+  //   socket.on("hello", (data) => {
+  //     console.log("Hello event received:", data);
+  //   });
 
-    socket.on("hello", (data) => {
-      console.log("Received from server:", data);
-      setMessages((prev) => [...prev, data]);
-    });
+  //   socket.on("receive_message", (data) => {
+  //     console.log("New message received:", data);
+  //   });
 
-    return () => {
-      socket.disconnect();
-      console.log("Socket disconnected");
-    };
-  }, []);
+  //   socket.on("error", (err) => {
+  //     console.error("Socket error:", err);
+  //   });
 
-  const sendInput = ()=>{
-    socket.emit("hello", "Hello from client with ID: "+ socket.id+ "with message: "+ message);
-    setMessage("");
-  }
+  //   // Cleanup on unmount
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, []);
+
+  // const handleJoinChat = () => {
+  //   socket.emit("join_chat", chatId);
+  //   console.log(`Joined chat room: chat_${chatId}`);
+  // };
+
+  // const handleSendMessage = () => {
+  //   const messageData = {
+  //     content: message,
+  //     senderId: 1, // Dummy senderId for testing
+  //     chatId: Number(chatId),
+  //   };
+  //   socket.emit("new message", messageData);
+  //   console.log("Sent message:", messageData);
+  //   setMessage("");
+  // };
+
+  // const handleHello = () => {
+  //   socket.emit("hello", "Hello from frontend");
+  // };
 
   return (
-    <div>
-      <h1>Socket prep started</h1>
-      <input
-        type="text"
-        placeholder="typeHere"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
-      <Button onClick={sendInput}>send message</Button>
-      <ul>
-        {messages.map((msg, index) => (
-          <li key={index}>{msg}</li>
-        ))}
-      </ul>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
-export default App
+export default App;
