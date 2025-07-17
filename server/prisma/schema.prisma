@@ -19,6 +19,7 @@ model User {
   name      String
   password  String
   pic       String?  @default("https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg")
+  publicKey String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   chatAdmin Chat[]   @relation("GroupAdmins")

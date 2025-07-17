@@ -9,10 +9,10 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   if (!validated.success) {
     return res.status(400).json({ success: false, message: validated.error.errors });
   }
-  const { content, senderId, chatId } = validated.data;
+  const { encryptedContent, senderId, chatId, signature } = validated.data;
   const message = await prismaClient.message.create({
     data: {
-      content,
+      content: encryptedContent,
       senderId: Number(senderId),
       chatId: Number(chatId),
     },
@@ -25,9 +25,9 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   // Update chat's latestMessage with the content
   await prismaClient.chat.update({
     where: { id: Number(chatId) },
-    data: { latestMessage: content },
+    data: { latestMessage: encryptedContent },
   });
-  res.status(201).json({ success: true, message: "Message sent", data: message });
+  res.status(201).json({ success: true, message: "Message sent", data: message, signature: signature });
 });
 
 // Fetch all messages for a chat
