@@ -1,3 +1,4 @@
+import BASE_URL from "@/BackendUrl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,16 +11,58 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 
 export default function LoginPage() {
-    const navigate = useNavigate(); // ✅ must be inside component
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const signUp = () => {
-      console.log("clicked to kara h");
-      navigate("/signUp");
-    };
+  const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    console.log("heeellll");
+    
+    setIsLoggingIn(true); // Set loading state
+    setErrorMessage(null); // Clear previous errors
+
+    try {
+      // 1. Authenticate with backend (email/password)
+      const response = await fetch(`${BASE_URL}/api/v1/user/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      console.log(data);
+
+      if(response.ok){
+        console.log("Login successful:", data.user);
+        localStorage.setItem("authToken", data.token);
+        navigate('/dashboard'); 
+      }else {
+        console.error("Login failed:", data.message);
+        setErrorMessage(data.message || "Login failed. Please check your credentials.");
+      }
+    }catch (error) {
+      console.error("Error during login:", error);
+      setErrorMessage(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  }
+
+  const signUp = () => {
+    console.log("clicked to kara h");
+    navigate("/signUp");
+  };
+
   return (
     <div className="w-full h-screen flex justify-center items-center bg-gradient-to-br from-rose-100 via-orange-100 to-yellow-200">
       <Card className="w-full max-w-xl">
@@ -43,6 +86,7 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="m@example.com"
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
@@ -53,17 +97,32 @@ export default function LoginPage() {
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
             </div>
           </form>
         </CardContent>
-        <CardFooter className="flex-col gap-2">
-          <Button type="submit" className="w-full">
-            Login
+        <CardFooter className="flex-col gap-2 mt-6">
+          {" "}
+          {/* Added margin-top for spacing */}
+          {errorMessage && (
+            <p className="text-red-500 text-m">{errorMessage}</p>
+          )}
+          <Button type="submit" className="w-full hover:cursor-pointer" disabled={isLoggingIn} onClick={handleLogin} >
+            {isLoggingIn ? "logging  In..." : "Login"}
           </Button>
-          <Button variant="outline" className="w-full" onClick={signUp}>
-            Create an account
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={signUp}
+            disabled={isLoggingIn}
+          >
+            Create an account?
           </Button>
         </CardFooter>
       </Card>

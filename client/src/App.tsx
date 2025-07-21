@@ -3,6 +3,8 @@ import { Routes, BrowserRouter, Route } from "react-router";
 import { io, Socket } from "socket.io-client";
 import LoginPage from "./page/Login";
 import SignUpPage from "./page/signup";
+import ChatComponent from "./page/ChatPage";
+import Home from "./page/Home";
 // import { Button } from "./components/ui/button";
 // import { Input } from "./components/ui/input";
 
@@ -62,8 +64,11 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<Home />} />{" "}
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        {/* Add more routes as needed */}
       </Routes>
     </BrowserRouter>
   );

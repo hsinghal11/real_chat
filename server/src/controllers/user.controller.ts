@@ -4,6 +4,7 @@ import { loginSchema, userSchema } from "../validation/validate";
 import bcrypt from "bcrypt";
 import { prismaClient } from "../db";
 import jwt from "jsonwebtoken";
+import { uploadOnCloudinary } from "../utils/cloudinary";
 
 /** User Registration
  * @route POST /api/v1/user/register
@@ -14,6 +15,14 @@ export const registerUser = asyncHandler(
   async (req: Request, res: Response) => {
     const payLoad = req.body;
     const result = userSchema.safeParse(payLoad);
+    const file = req.file as Express.Multer.File;
+    
+    let avatarPath: string | null;
+    
+    if (file && file.path) {
+      const uploadResponse = await uploadOnCloudinary(file.path);
+      avatarPath = uploadResponse?.url || null;
+    }
 
     if (!result.success) {
       return res.status(400).json({
@@ -22,7 +31,7 @@ export const registerUser = asyncHandler(
       });
     }
 
-    const { email, name, password, pic, publicKey } = result.data;
+    const { email, name, password, pic, publicKey } = result.data;    
 
     const isUserExists = await prismaClient.user.findUnique({
       where: {
@@ -62,6 +71,8 @@ export const registerUser = asyncHandler(
  */
 export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   const payLoad = req.body;
+  console.log(payLoad);
+  
   const result = loginSchema.safeParse(payLoad);
 
   if (!result.success) {
