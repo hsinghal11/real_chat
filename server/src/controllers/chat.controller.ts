@@ -49,9 +49,10 @@ export const fetchChats = asyncHandler(async (req: Request, res: Response) => {
   });
 
   if (chats.length === 0) {
-    return res.status(401).json({
-      success: false,
-      message: "No chats found for the user",
+    return res.status(200).json({
+      success: true,
+      message: "Start a new Chat Search for the user",
+      data: []
     });
   }
 
@@ -67,6 +68,10 @@ export const createOrFetchPrivateChat = asyncHandler(
   async (req: Request, res: Response) => {
     const { userId } = req.body;
     const currentUserId = req.user?.id;
+console.log("jadooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+
+    console.log(userId+"yaha id aayegi na --------------------------------------------------------");
+    
 
     if (!userId || !currentUserId) {
       return res.status(400).json({

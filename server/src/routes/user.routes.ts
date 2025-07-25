@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginUser, registerUser, searchUserByEmail, fuzzySearchUserByEmail } from "../controllers/user.controller";
+import { loginUser, registerUser, searchUserByEmail, fuzzySearchUserByEmail, getUserPublicKey } from "../controllers/user.controller";
 import { verifyJWT } from "../middleware/auth.middlerware";
 import { upload } from "../middleware/multer.middleware";
 
@@ -11,5 +11,6 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 router.route("/search").get(verifyJWT, searchUserByEmail);
 router.route("/fuzzy-search").get(verifyJWT, fuzzySearchUserByEmail);
+router.route("/public-id").get(verifyJWT, getUserPublicKey);
 
 export default router;

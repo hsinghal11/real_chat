@@ -142,7 +142,7 @@ export const searchUserByEmail = asyncHandler(
     }
     const user = await prismaClient.user.findUnique({
       where: { email },
-      select: { id: true, name: true, email: true, pic: true },
+      select: { id: true, name: true, email: true, pic: true, publicKey: true },
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -169,9 +169,16 @@ export const fuzzySearchUserByEmail = asyncHandler(
       `SET pg_trgm.similarity_threshold = ${threshold};`
     );
     const users = (await prismaClient.$queryRawUnsafe(
-      `SELECT id, name, email, pic FROM "User" WHERE email % $1 ORDER BY similarity(email, $1) DESC LIMIT 5;`,
+      `SELECT id, name, email, pic, "publicKey" FROM "User" WHERE email % $1 ORDER BY similarity(email, $1) DESC LIMIT 5;`,
       email
-    )) as Array<{ id: number; name: string; email: string; pic: string }>;
+    )) as Array<{
+      id: number;
+      name: string;
+      email: string;
+      pic: string;
+      publicKey?: string;
+    }>;
+    console.log(users);
     if (!users || users.length === 0) {
       return res.status(404).json({ message: "No similar users found" });
     }
