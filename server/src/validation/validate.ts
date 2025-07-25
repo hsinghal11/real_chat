@@ -44,8 +44,8 @@ const messageSchema = z
   .object({
     encryptedContent: z.string().min(1, "Message content is required").trim(),
     signature: z.string(),
-    senderId: z.string(),
-    chatId: z.string(),
+    senderId: z.number(),
+    chatId: z.number(),
   })
   .refine(
     (data) => {

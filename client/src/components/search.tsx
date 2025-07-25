@@ -1,6 +1,6 @@
 import BASE_URL from '@/BackendUrl';
 import axios from 'axios';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Input } from './ui/input';
 import { Label } from '@radix-ui/react-label';
 import { Button } from './ui/button';

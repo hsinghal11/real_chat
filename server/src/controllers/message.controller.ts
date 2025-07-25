@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { prismaClient } from "../db";
 import { asyncHandler } from "../utils/asyncHandler.util";
 import { messageSchema } from "../validation/validate";
+import { Prisma } from "@prisma/client";
 
 // Send a message
 export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
@@ -10,24 +11,36 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
     return res.status(400).json({ success: false, message: validated.error.errors });
   }
   const { encryptedContent, senderId, chatId, signature } = validated.data;
-  const message = await prismaClient.message.create({
-    data: {
-      content: encryptedContent,
-      senderId: Number(senderId),
-      chatId: Number(chatId),
-    },
-    include: {
-      sender: true,
-      chat: true,
-      readBy: true,
-    },
-  });
-  // Update chat's latestMessage with the content
-  await prismaClient.chat.update({
-    where: { id: Number(chatId) },
-    data: { latestMessage: encryptedContent },
-  });
-  res.status(201).json({ success: true, message: "Message sent", data: message, signature: signature });
+try {
+  
+    const message = await prismaClient.message.create({
+      data: {
+        content: encryptedContent,
+        senderId: Number(senderId),
+        chatId: Number(chatId),
+      },
+      include: {
+        sender: true,
+        chat: true,
+        readBy: true,
+      },
+    });
+    // Update chat's latestMessage with the content
+    await prismaClient.chat.update({
+      where: { id: Number(chatId) },
+      data: { latestMessage: encryptedContent },
+    });
+    res.status(201).json({ success: true, message: "Message sent", data: message, signature: signature });    
+} catch (error) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Action forbidden: Sender is not a participant of this chat." 
+      });
+    }
+    console.error(error); // Log unexpected errors
+    res.status(500).json({ success: false, message: "An internal server error occurred." });
+  }
 });
 
 // Fetch all messages for a chat

@@ -38,19 +38,49 @@ export default function SignUpPage() {
     setErrorMessage(null); // Clear previous errors
 
     try {
-      // 1. Generate key pair
-      const keyPair = await generateKeyPair();
-      const publicKeyPem = await exportKeyToPem(keyPair.publicKey, "public");
-      const privateKeyPem = await exportKeyToPem(keyPair.privateKey, "private");
+      console.log("handleSignUp: Attempting to generate key pairs.");
+      const keys = await generateKeyPair(); // This returns { publicKey, privateKey, signingPublicKey, signingPrivateKey }
+      console.log("handleSignUp: Key pairs generated.");
 
-      console.log({
-        publicKeyPem: publicKeyPem,
-        privateKeyPem: privateKeyPem,
-      });
+      // Export the private keys to PEM format
+      console.log("handleSignUp: Exporting encryption private key to PEM.");
+      const privateKeyPem = await exportKeyToPem(keys.privateKey, "private"); // RSA-OAEP private key for decryption
+      console.log(
+        "handleSignUp: Encryption Private Key PEM (partial):",
+        privateKeyPem.substring(0, 50) + "..."
+      );
 
-      // Store private key securely (e.g., in localStorage or IndexedDB)
-      localStorage.setItem("userPrivateKey", privateKeyPem);
+      console.log("handleSignUp: Exporting signing private key to PEM.");
+      const signingPrivateKeyPem = await exportKeyToPem(
+        keys.signingPrivateKey,
+        "private"
+      ); // RSASSA-PKCS1-v1_5 private key for signing
+      console.log(
+        "handleSignUp: Signing Private Key PEM (partial):",
+        signingPrivateKeyPem.substring(0, 50) + "..."
+      );
 
+      // Store both private keys securely in localStorage
+      console.log("handleSignUp: Storing private keys in localStorage.");
+      localStorage.setItem("userPrivateKey", privateKeyPem); // For decryption (future use)
+      localStorage.setItem("userSigningPrivateKey", signingPrivateKeyPem); // For signing
+      console.log("handleSignUp: Private keys stored.");
+
+      // Export the public key for encryption to send to the server
+      console.log("handleSignUp: Exporting public key for server.");
+      const publicKeyPem = await exportKeyToPem(keys.publicKey, "public"); // RSA-OAEP public key
+      console.log(
+        "handleSignUp: Public Key PEM (partial):",
+        publicKeyPem.substring(0, 50) + "..."
+      );
+
+      // 2. Send public key along with registration data to your backend
+      console.log("handleSignUp: Sending registration data to backend.");
+      // Note: You seem to be using FormData in your provided snippet (app.append("avatar", pic);).
+      // If you are sending JSON, ensure your backend handles JSON and not FormData unless
+      // `pic` is handled separately as a file upload. For simplicity and to match the
+      // initial request, I'll stick to JSON here for `publicKey`. If `pic` is a File object,
+      // you must use FormData or a separate upload endpoint for it.
       // 2. Prepare FormData for sending data including the file
       const formData = new FormData();
       formData.append("email", email);
@@ -62,28 +92,25 @@ export default function SignUpPage() {
         formData.append("avatar", pic); // Append the File object if it exists
       }
       /**
-       *  @check only how form data has the data or not 
+       *  @check only how form data has the data or not
        */
       // @ts-ignore
-      function logFormData(){
-      console.log("\n--- FormData Contents (Method 2) ---");
-      formData.forEach((value, key) => {
-        console.log(`${key}:`, value);
-      });
+      function logFormData() {
+        console.log("\n--- FormData Contents (Method 2) ---");
+        formData.forEach((value, key) => {
+          console.log(`${key}:`, value);
+        });
       }
-      
+
       // 3. Send data to your backend
-      const response = await fetch(
-        `${BASE_URL}/api/v1/user/register`,
-        {
-          // Adjust endpoint as needed
-          method: "POST",
-          body: formData, // Use FormData directly as the body
-          // When using FormData, the browser automatically sets the
-          // 'Content-Type' header to 'multipart/form-data' with the correct boundary.
-          // DO NOT set 'Content-Type': 'application/json' here.
-        }
-      );
+      const response = await fetch(`${BASE_URL}/api/v1/user/register`, {
+        // Adjust endpoint as needed
+        method: "POST",
+        body: formData, // Use FormData directly as the body
+        // When using FormData, the browser automatically sets the
+        // 'Content-Type' header to 'multipart/form-data' with the correct boundary.
+        // DO NOT set 'Content-Type': 'application/json' here.
+      });
 
       const data = await response.json();
       if (response.ok) {

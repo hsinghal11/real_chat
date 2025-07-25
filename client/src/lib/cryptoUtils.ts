@@ -1,46 +1,48 @@
 // client/src/lib/cryptoUtils.ts
-// This file will contain functions for key generation, encryption, decryption, signing, and verification.
+
+// Define a custom interface for the generated key pairs
+export interface AllKeyPairs {
+  publicKey: CryptoKey;
+  privateKey: CryptoKey; // For RSA-OAEP (encryption/decryption)
+  signingPublicKey: CryptoKey;
+  signingPrivateKey: CryptoKey; // For RSASSA-PKCS1-v1_5 (signing/verification)
+}
 
 /**
  * Generates an RSA public and private key pair for encryption/decryption and signing.
  * @returns A Promise that resolves to an object containing the public and private keys.
  */
-export async function generateKeyPair(): Promise<CryptoKeyPair> {
-  // Generate an RSA key pair for encryption/decryption and signing
-  // You might choose different algorithms and key sizes based on your security needs.
-  // RSA-OAEP for encryption is standard, and RSASSA-PKCS1-v1_5 for signing.
-  return await crypto.subtle
-    .generateKey(
-      {
-        name: "RSA-OAEP",
-        modulusLength: 2048, // Can be 4096 for stronger security
-        publicExponent: new Uint8Array([0x01, 0x00, 0x01]), // 65537
-        hash: "SHA-256",
-      },
-      true, // extractable
-      ["encrypt", "decrypt", "wrapKey", "unwrapKey"] // Key usages for encryption
-    )
-    .then(async (keyPair: CryptoKeyPair) => {
-      // Also generate a separate key pair for signing for clarity, though RSA-OAEP can be used for both.
-      // For simplicity, let's assume one key pair for both for now, or you can generate two separate pairs.
-      // If using one key pair for both, ensure 'sign' and 'verify' are also in usages.
-      const signingKeyPair = await crypto.subtle.generateKey(
-        {
-          name: "RSASSA-PKCS1-v1_5",
-          modulusLength: 2048,
-          publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-          hash: "SHA-256",
-        },
-        true,
-        ["sign", "verify"]
-      );
-      return {
-        publicKey: keyPair.publicKey,
-        privateKey: keyPair.privateKey,
-        signingPublicKey: signingKeyPair.publicKey,
-        signingPrivateKey: signingKeyPair.privateKey,
-      };
-    });
+export async function generateKeyPair(): Promise<AllKeyPairs> {
+  // Generate an RSA key pair for encryption/decryption
+  const encryptionKeyPair = await crypto.subtle.generateKey(
+    {
+      name: "RSA-OAEP",
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+      hash: "SHA-256",
+    },
+    true, // extractable
+    ["encrypt", "decrypt", "wrapKey", "unwrapKey"]
+  );
+
+  // Generate a separate RSA key pair for signing
+  const signingKeyPair = await crypto.subtle.generateKey(
+    {
+      name: "RSASSA-PKCS1-v1_5", // Algorithm for signing
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+      hash: "SHA-256",
+    },
+    true,
+    ["sign", "verify"] // Key usages for signing
+  );
+
+  return {
+    publicKey: encryptionKeyPair.publicKey,
+    privateKey: encryptionKeyPair.privateKey,
+    signingPublicKey: signingKeyPair.publicKey,
+    signingPrivateKey: signingKeyPair.privateKey,
+  };
 }
 
 /**
@@ -79,19 +81,31 @@ export async function exportKeyToPem(
 export async function importKeyFromPem(
   pem: string,
   type: "public" | "private",
-  usages: KeyUsage[]
+  usages: KeyUsage[] // This array is crucial for determining the algorithm
 ): Promise<CryptoKey> {
   const base64 = pem
     .replace(/(-----(BEGIN|END) (PUBLIC|PRIVATE) KEY-----|\n)/g, "")
     .trim();
   const buffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
+  let algorithm: RsaHashedKeyGenParams | RsaHashedImportParams;
+
+  // Determine the algorithm based on the requested usages
+  if (usages.includes("sign") || usages.includes("verify")) {
+    algorithm = { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" };
+  } else if (usages.includes("encrypt") || usages.includes("decrypt")) {
+    algorithm = { name: "RSA-OAEP", hash: "SHA-256" };
+  } else {
+    // Fallback or throw an error if usages are unknown
+    throw new Error(
+      "Unknown key usages for import. Cannot determine algorithm."
+    );
+  }
+
   return await crypto.subtle.importKey(
     type === "public" ? "spki" : "pkcs8",
     buffer,
-    type === "public"
-      ? { name: "RSA-OAEP", hash: "SHA-256" }
-      : { name: "RSA-OAEP", hash: "SHA-256" }, // Adjust algorithm based on key generation
+    algorithm, // Use the dynamically determined algorithm
     true, // extractable
     usages
   );

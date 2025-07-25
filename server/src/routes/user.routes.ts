@@ -11,6 +11,6 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 router.route("/search").get(verifyJWT, searchUserByEmail);
 router.route("/fuzzy-search").get(verifyJWT, fuzzySearchUserByEmail);
-router.route("/public-id").get(verifyJWT, getUserPublicKey);
+router.route("/public-key/:userId").get(verifyJWT, getUserPublicKey);
 
 export default router;
