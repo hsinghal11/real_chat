@@ -14,7 +14,6 @@ import { useNavigate } from "react-router-dom";
 import { useState, type ChangeEvent } from "react";
 import { generateKeyPair, exportKeyToPem } from "@/lib/cryptoUtils"; // Import crypto utils
 import BASE_URL from "@/BackendUrl";
-import Search from "@/components/search";
 
 export default function SignUpPage() {
   const navigate = useNavigate();

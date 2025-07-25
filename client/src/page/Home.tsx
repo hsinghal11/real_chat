@@ -1,5 +1,4 @@
 // src/pages/HomePage.tsx
-import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/navbar"; 
 // You'll want to replace this with your actual image
