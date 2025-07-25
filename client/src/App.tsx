@@ -5,6 +5,7 @@ import LoginPage from "./page/Login";
 import SignUpPage from "./page/signup";
 import ChatComponent from "./page/ChatPage";
 import Home from "./page/Home";
+import Dashboard from "./page/dashBoard";
 // import { Button } from "./components/ui/button";
 // import { Input } from "./components/ui/input";
 
@@ -67,7 +68,7 @@ function App() {
         <Route path="/" element={<Home />} />{" "}
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
-        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        <Route path="/dashboard" element={<Dashboard />} />
         {/* Add more routes as needed */}
       </Routes>
     </BrowserRouter>

@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, type ChangeEvent } from "react";
 import { generateKeyPair, exportKeyToPem } from "@/lib/cryptoUtils"; // Import crypto utils
 import BASE_URL from "@/BackendUrl";
+import Search from "@/components/search";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -114,80 +115,91 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="w-full h-screen flex justify-center items-center bg-gradient-to-br from-yellow-100 to-rose-200">
-      <Card className="w-full max-w-xl ">
-        <CardHeader>
-          <CardTitle>Signup to your account</CardTitle>
-          <CardDescription>
-            Enter your details below to create your account
-          </CardDescription>
-          <CardAction>
-            <Button variant="link" onClick={login}>
-              Login
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignUp}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Your Name"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="pic">Profile Picture (Optional)</Label>
-                <Input id="pic" type="file" name="avatar" onChange={handleFileChange} />
-              </div>
-            </div>
-            <CardFooter className="flex-col gap-2 mt-6">
-              {" "}
-              {/* Added margin-top for spacing */}
-              {errorMessage && (
-                <p className="text-red-500 text-m">{errorMessage}</p>
-              )}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Signing Up..." : "Sign Up"}
+    <>
+      <div className="w-full h-screen flex justify-center items-center bg-gradient-to-br from-yellow-100 to-rose-200">
+        <Card className="w-full max-w-xl ">
+          <CardHeader>
+            <CardTitle>Signup to your account</CardTitle>
+            <CardDescription>
+              Enter your details below to create your account
+            </CardDescription>
+            <CardAction>
+              <Button variant="link" onClick={login}>
+                Login
               </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={login}
-                disabled={isSubmitting}
-              >
-                Already have an account?
-              </Button>
-            </CardFooter>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSignUp}>
+              <div className="flex flex-col gap-6">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Your Name"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="********"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="pic">Profile Picture (Optional)</Label>
+                  <Input
+                    id="pic"
+                    type="file"
+                    name="avatar"
+                    onChange={handleFileChange}
+                  />
+                </div>
+              </div>
+              <CardFooter className="flex-col gap-2 mt-6">
+                {" "}
+                {/* Added margin-top for spacing */}
+                {errorMessage && (
+                  <p className="text-red-500 text-m">{errorMessage}</p>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Signing Up..." : "Sign Up"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={login}
+                  disabled={isSubmitting}
+                >
+                  Already have an account?
+                </Button>
+              </CardFooter>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

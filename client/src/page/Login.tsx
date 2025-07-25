@@ -43,7 +43,7 @@ export default function LoginPage() {
       console.log(data);
 
       if(response.ok){
-        console.log("Login successful:", data.user);
+        console.log("Login successful:", data);
         localStorage.setItem("authToken", data.token);
         navigate('/dashboard'); 
       }else {

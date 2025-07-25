@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/navbar"; 
 // You'll want to replace this with your actual image
 // Example image import (ensure it's in your public folder or set up with webpack/vite)
-import heroImage from "../../public/chat.jpg"; // Example path, adjust as needed
+import heroImage from "/chat.jpg"; // Example path, adjust as needed
 
 export default function HomePage() {
   return (
